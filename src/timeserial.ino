@@ -272,8 +272,17 @@ void loop() {
   int m;
   int s;
 
+  h = hour();
+  m = minute();
+  s = second();
+
   #ifdef RTC_ENABLED
     DateTime rtcNow = rtc.now();
+    h = rtcNow.hour();
+    m = rtcNow.minute();
+    s = rtcNow.second();
+
+    setTime( rtcNow.unixtime() );
 
     Serial.print("RTC: ");
     Serial.print(rtcNow.year(), DEC);
@@ -289,6 +298,8 @@ void loop() {
     Serial.print(rtcNow.minute(), DEC);
     Serial.print(':');
     Serial.print(rtcNow.second(), DEC);
+    Serial.print(" ");
+    Serial.print(rtcNow.unixtime(), DEC);
     Serial.println();
 #endif    
 
@@ -301,9 +312,7 @@ void loop() {
     }
   }
 
-  h = hour();
-  m = minute();
-  s = second();
+
   // Check if it's in the valid hour, then minute.
   if ( indexOfInteger(speakHours, speakHoursSize, h) ) {
     if ( indexOfInteger(speakMins, speakMinsSize, m) ) {
@@ -399,7 +408,7 @@ void playTrack(int trackNum, int lengthInMs) {
     LOG.println("playing track");
 
     rtcMem.lockedOut = true;
-    rtcMem.lockedOutUntil = now() + (lengthInMs/1000);
+    rtcMem.lockedOutUntil = now() + (lengthInMs/1000)*2;
     LOG.printf("TIME NOW: %lu will be locked out until %lu\n", (unsigned long) now(), (unsigned long) rtcMem.lockedOutUntil);
 
 #ifdef USE_MP3_RELAY
