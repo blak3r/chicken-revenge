@@ -402,7 +402,7 @@ void mpu6050_initForInterrupts() {
     writeByte(MPU6050_ADDRESS, I2C_SLV0_ADDR, 0x20); //write register 0x37 to select how to use the interrupt pin. For an active high, push-pull signal that stays until register (decimal) 58 is read, write 0x20.
     writeByte(MPU6050_ADDRESS, ACCEL_CONFIG, 0x01); //Write register 28 (==0x1C) to set the Digital High Pass Filter, bits 3:0. For example set it to 0x01 for 5Hz. (These 3 bits are grey in the data sheet, but they are used! Leaving them 0 means the filter always outputs 0.)
     writeByte(MPU6050_ADDRESS, MOT_THR, 10); //Write the desired Motion threshold to register 0x1F (For example, write decimal 20).  
-    writeByte(MPU6050_ADDRESS, MOT_DUR, 80); //Originally 40 - Set motion detect duration to 1  ms; LSB is 1 ms @ 1 kHz rate  
+    writeByte(MPU6050_ADDRESS, MOT_DUR, 60); //Originally 40 - Set motion detect duration to 1  ms; LSB is 1 ms @ 1 kHz rate  
     writeByte(MPU6050_ADDRESS, MOT_DETECT_CTRL, 0x15); //to register 0x69, write the motion detection decrement and a few other settings (for example write 0x15 to set both free-fall and motion decrements to 1 and accelerometer start-up delay to 5ms total by adding 1ms. )   
     //setting motion detection threshold to 2
     writeByte(MPU6050_ADDRESS, MPU6050_RA_MOT_THR, 2);

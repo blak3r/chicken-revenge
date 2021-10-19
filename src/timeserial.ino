@@ -28,12 +28,13 @@ extern "C" {
 //#define LCD_BACKLIGHT_ENABLED 1
 #define RTC_ENABLED 1
 //#define RTC_FORCE_ADJUST 1
+#define NO_SPEAKING_AT_NIGHT_MODE 1
 
 
 #if LCD_ENABLED || MPU_ENABLED
   #define BOOT_DELAY 50
 #else
-  #define BOOT_DELAY 50
+  #define BOOT_DELAY 5
 #endif
 
 //------- SPEAK STYLE ----------
@@ -81,6 +82,10 @@ SoftwareSerial mp3Serial(RXPIN, TXPIN); // RX, TX
 #define TRACK_WARNINGYOU 4
 #define TRACK_LOWLEVELCLUCKS 2
 #define TRACK_COUNTDOWN 7
+
+#define TRACK_BUHGOK_LENGTH 4000
+#define TRACK_PUTMEDOWN_LENGTH 7000
+#define TRACK_COUNTDOWN_LENGTH 20000
 
 // ------------ GLOBALS ------------------//
 typedef struct {
@@ -257,21 +262,23 @@ void setup()  {
 }
 
 bool ledState = false;
+int noSpeakHours[] = {18,19,20,21,22,23,24,0,1,2,3,4,5,6,7,8,9,10};
 int speakHours[] = {11, 12, 13, 14, 15, 16, 17};
 int speakMins[] = {0, 30};
 int lightSensorADC = 0;
 
+size_t noSpeakHoursSize = sizeof( noSpeakHours ) / sizeof(int);
 size_t speakHoursSize = sizeof( speakHours ) / sizeof(int);
 size_t speakMinsSize = sizeof( speakMins ) / sizeof(int);
 
 #define LOCK_OUT_TIME 6
 
+int h;
+int m;
+int s;
+
 
 void loop() {
-  int h;
-  int m;
-  int s;
-
   h = hour();
   m = minute();
   s = second();
@@ -316,7 +323,7 @@ void loop() {
   // Check if it's in the valid hour, then minute.
   if ( indexOfInteger(speakHours, speakHoursSize, h) ) {
     if ( indexOfInteger(speakMins, speakMinsSize, m) ) {
-      if ( s < 13) {
+      if ( s < 8) {
         LOG.printf("The hour (%d) and minute (%d) matched and s=%d... it's buhGok Time (if not locked out)\n", h, m, s);
         triggerBuhgok();
       }
@@ -403,7 +410,16 @@ void writeToRTCMemory() {
 
 void playTrack(int trackNum, int lengthInMs) {
   LOG.printf("Attempting to play track %d, for %d\nms", trackNum, lengthInMs);
-  mp3_setVolume(10);
+  //mp3_setVolume(10);
+  
+  // Check if in NO SPEAK TIMES
+  #if NO_SPEAKING_AT_NIGHT_MODE
+    if ( indexOfInteger(noSpeakHours, noSpeakHoursSize, h) ) {
+      LOG.printf("NOT SPEAKING - IN NO SPEAK LOCKOUT, hour=%d\n", h);
+      return;
+    }
+  #endif
+
   if ( !rtcMem.lockedOut ) {
     LOG.println("playing track");
 
@@ -442,7 +458,7 @@ void triggerBuhgok() {
     lcd.setCursor(0, 0);
     lcd.print("TIME TRIG");
   #endif
-  playTrack(6, 4000);
+  playTrack(6, TRACK_BUHGOK_LENGTH);
 }
 
 void triggerLightDetected() {
@@ -452,7 +468,7 @@ void triggerLightDetected() {
     lcd.print("LIGHT DET");
   #endif
   rtcMem.lastLightSensorTrackPlayedAt = now();
-  playTrack(TRACK_COUNTDOWN, 20000);
+  playTrack(TRACK_COUNTDOWN, TRACK_COUNTDOWN_LENGTH);
 }
 
 void triggerMotion() {
@@ -462,7 +478,7 @@ void triggerMotion() {
     lcd.print("MOTION DET");
   #endif
   rtcMem.lastMotionTrackPlayedAt = now();
-  playTrack(TRACK_PUTMEDOWN, 7000);
+  playTrack(TRACK_PUTMEDOWN, TRACK_PUTMEDOWN_LENGTH);
 }
 
 void digitalClockDisplay() {
